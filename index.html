@@ -161,6 +161,7 @@
         import { getFirestore } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 
         const firebaseConfig = {
@@ -172,11 +173,18 @@
             appId: "1:709893829413:web:84006d6c252e065ef9e0cc"
         };
 
+        let url = "https://13.209.69.177.nip.io/sparta_api/weather/seoul";
+        fetch(url).then(res => res.json()).then(data => {
+            let temp = data['temp'];
+            $('#temperature').text(temp);
+        })
+
 
         // Firebase 인스턴스 초기화
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // 기존 영화 저장 기능
         $("#postingbtn").click(async function () {
             let image = $('#image').val();
             let title = $('#title').val();
@@ -194,48 +202,143 @@
             window.location.reload();
         })
 
-        let url = "https://13.209.69.177.nip.io/sparta_api/weather/seoul";
-        fetch(url).then(res => res.json()).then(data => {
-            let temp = data['temp'];
-            $('#temperature').text(temp);
-        })
 
-        let docs = await getDocs(collection(db, "movies"));
-        docs.forEach((doc) => {
-            let row = doc.data();
-            let image = row['image'];
-            let title = row['title'];
-            let comment = row['comment'];
-            let star = row['star'];
-
-
-            let temp_html = `    
+        // 카드 html 생성 함수
+        function createCardHtml(doc, data) {
+            const { image, title, comment, star } = data;
+            return `
             <div class="col">
                 <div class="card h-100">
                     <img src="${image}" 
-                        class="card-img-top" alt="...">
+                        class="card-img-top" alt="${title}">
                     <div class="card-body">
                         <h5 class="card-title">${title}</h5>
                         <p class="card-text">${star}</p>
                         <p class="card-text">${comment}</p>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editModal-${doc.id}">
+                            수정하기
+                        </button>
                     </div>
                 </div>
             </div>`;
-            $('#card').append(temp_html);
+        }
+
+        // 수정 모달 html 생성 함수
+        function createModalHtml(doc, data) {
+            const { image, title, comment, star } = data;
+            return `
+    <div class="modal fade" id="modal-${doc.id}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">${title}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <img src="${image}" class="img-fluid mb-3" alt="${title}">
+                    <p><strong>평점:</strong> ${star}</p>
+                    <p><strong>코멘트:</strong> ${comment}</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger delete-btn" data-id="${doc.id}">삭제하기</button>
+                    <button type="button" class="btn btn-secondary" data-bs-toggle="modal">수정하기</button>
+                </div>
+            </div>
+        </div>
+    </div>`;
+        }
+
+        // 데이터 가져와서 카드 및 모달 생성
+        let docs = await getDocs(collection(db, "movies"));
+        docs.forEach((doc) => {
+            let row = doc.data();
+
+            $('#card').append(createCardHtml(doc, row));
+            $('body').append(createModalHtml(doc, row));
+            $('body').append(createEditModalHtml(doc, row));
         });
 
-        // 문서 참조 가져오기
-        const docRef = doc(db, "컬렉션명", "문서ID");
+        // 수정 모달 HTML 생성 함수
+        function createEditModalHtml(doc, data) {
+            const { image, title, comment, star } = data;
+            return `
+  <div class="modal fade" id="editModal-${doc.id}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">영화 정보 수정</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-floating mb-3">
+            <input type="url" class="form-control" id="edit-image-${doc.id}" placeholder="영화 이미지 주소" value="${image}">
+            <label for="edit-image-${doc.id}">영화 이미지 주소</label>
+          </div>
+          <div class="form-floating mb-3">
+            <input type="text" class="form-control" id="edit-title-${doc.id}" placeholder="영화 제목" value="${title}">
+            <label for="edit-title-${doc.id}">영화 제목</label>
+          </div>
+          <div class="input-group mb-3">
+            <label class="input-group-text" for="edit-star-${doc.id}">별점</label>
+            <select class="form-select" id="edit-star-${doc.id}">
+              <option ${star === "⭐" ? "selected" : ""} value="⭐">⭐</option>
+              <option ${star === "⭐⭐" ? "selected" : ""} value="⭐⭐">⭐⭐</option>
+              <option ${star === "⭐⭐⭐" ? "selected" : ""} value="⭐⭐⭐">⭐⭐⭐</option>
+              <option ${star === "⭐⭐⭐⭐" ? "selected" : ""} value="⭐⭐⭐⭐">⭐⭐⭐⭐</option>
+              <option ${star === "⭐⭐⭐⭐⭐" ? "selected" : ""} value="⭐⭐⭐⭐⭐">⭐⭐⭐⭐⭐</option>
+            </select>
+          </div>
+          <div class="form-floating mb-3">
+            <input type="text" class="form-control" id="edit-comment-${doc.id}" placeholder="추천 이유" value="${comment}">
+            <label for="edit-comment-${doc.id}">추천 이유</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+          <button type="button" class="btn btn-primary save-edit-btn" data-id="${doc.id}">저장</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+        }
 
-        // 문서 삭제하기
-        deleteDoc(docRef)
-            .then(() => {
-                console.log("문서가 성공적으로 삭제되었습니다!");
-            })
-            .catch((error) => {
-                console.error("문서 삭제 중 오류 발생:", error);
-            });
 
+        // 삭제 버튼 이벤트 리스너 추가
+        $(document).on('click', '.delete-btn', async function () {
+            const docId = $(this).data('id');
+            if (confirm('정말 삭제하시겠습니까?')) {
+                try {
+                    await deleteDoc(doc(db, "movies", docId));
+                    alert('삭제되었습니다!');
+                    window.location.reload();
+                } catch (error) {
+                    console.error("삭제 중 오류 발생:", error);
+                    alert('삭제 중 오류가 발생했습니다.');
+                }
+            }
+        });
+
+        //수정 저장 버튼 이벤트 리스너
+        $(document).on('click', '.save-edit-btn', async function () {
+            const docId = $(this).data('id');
+            try {
+                // 수정된 데이터 가져오기
+                let updatedData = {
+                    image: $(`#edit-image-${docId}`).val(),
+                    title: $(`#edit-title-${docId}`).val(),
+                    star: $(`#edit-star-${docId}`).val(),
+                    comment: $(`#edit-comment-${docId}`).val()
+                };
+
+                // 데이터베이스 업데이트
+                await updateDoc(doc(db, "movies", docId), updatedData);
+                alert('수정이 완료되었습니다!');
+                window.location.reload();
+            } catch (error) {
+                console.error("수정 중 오류 발생:", error);
+                alert('수정 중 오류가 발생했습니다.');
+            }
+        });
     </script>
     <script>
         import {
