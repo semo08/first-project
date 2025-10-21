@@ -22,6 +22,7 @@
             background-image: url('https://occ-0-1123-1217.1.nflxso.net/dnm/api/v6/6AYY37jfdO6hpXcMjf9Yu5cnmO0/AAAABeIfo7VL_VDyKnljV66IkR-4XLb6xpZqhpLSo3JUtbivnEW4s60PD27muH1mdaANM_8rGpgbm6L2oDgA_iELHZLZ2IQjG5lvp5d2.jpg?r=e6e.jpg');
             background-position: center;
             background-size: cover;
+            padding: 30px;
 
         }
 
@@ -30,7 +31,8 @@
         }
 
         .mycards {
-            width: 1200px;
+            width: 80%;
+            max-width: 1500px;
             margin: 20px auto 20px auto;
         }
 
@@ -66,6 +68,75 @@
         .modal-header .modal-title {
             color: white;
         }
+
+        img {
+            max-width: 100%;
+        }
+
+        html {
+            font-size: 16px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            font-size: 1rem;
+            line-height: 1.5;
+            /* 24px (16px * 1.5) */
+            margin: 0 0 1rem;
+            /* 하단 여백 16px */
+        }
+
+        .button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .main h1 {
+                font-size: 2rem;
+                /* 2rem = 16px */
+            }
+
+            .main p {
+                font-size: 1rem;
+            }
+
+            .card-img-top {
+                height: 200px;
+            }
+
+            html {
+                font-size: 14px;
+            }
+
+        }
+
+        /* 모달 반응형 스타일 */
+        @media (max-width: 576px) {
+            .modal-dialog {
+                margin: 0.5rem;
+            }
+
+            .modal-content {
+                padding: 10px;
+            }
+
+            .form-floating>input {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* 이미지 최적화 */
+        .card-img-top {
+            height: 250px;
+            object-fit: cover;
+            /* 이미지 비율 유지 */
+        }
+
     </style>
 
 </head>
@@ -156,7 +227,7 @@
     </div>
 
     <div class="mycards">
-        <div id="card" class="row row-cols-1 row-cols-md-4 g-4">
+        <div id="card" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4">
         </div>
     </div>
 
@@ -346,4 +417,3 @@
 
 
 </html>
-
